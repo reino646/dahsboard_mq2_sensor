@@ -1,0 +1,96 @@
+.mo-fire {
+    width: 140px;
+    height: auto;
+    position: absolute;
+    left:50%;
+    margin-left: -100px;
+
+    }
+    .mo-fire svg {
+    width: 100%;
+    height: auto;
+    position: relative
+    }
+    .flame {
+    animation-name: flamefly;
+    animation-duration: 2s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    opacity: 0;
+    transform-origin: 50% 50% 0;
+    }
+    .flame.one {
+    animation-delay: 1s;
+    animation-duration: 3s;
+    }
+    .flame3.two{
+    animation-duration: 5s;
+    animation-delay: 1s;
+    }
+
+    .flame-main {
+    animation-name: flameWobble;
+    animation-duration: 3s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    }
+    .flame-main.one {
+    animation-duration: 4s;
+    animation-delay: 1s;
+    }
+    .flame-main.two {
+    animation-duration: 3s;
+    animation-delay: 2s;
+    }
+    .flame-main.three {
+    animation-duration: 2.1s;
+    animation-delay: 3s;
+    }
+    .flame-main.four {
+    animation-duration: 3.2s;
+    animation-delay: 4s;
+    }
+    .flame-main.five {
+    animation-duration: 2.5s;
+    animation-delay: 5s;
+    }
+    @keyframes flameWobble {
+    50% {
+        transform: scale(1,1.2) translate(0, -30px) rotate(-2deg);
+    }
+    }
+    @keyframes flamefly {
+    0%{
+        transform: translate(0) rotate(180deg);
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-20px, -100px) rotate(180deg);
+        opacity: 0;
+    }
+}
+
+.wave {
+    animation-name: wave-animation;  /* Refers to the name of your @keyframes element below */
+    animation-duration: 2.5s;        /* Change to speed up or slow down */
+    animation-iteration-count: infinite;  /* Never stop waving :) */
+    transform-origin: 80% 70%;       /* Pivot around the bottom-left palm */
+    display: inline-block;
+  }
+  
+  @keyframes wave-animation {
+      0% { transform: rotate( 0.0deg) }
+     10% { transform: rotate(14.0deg) }  /* The following five values can be played with to make the waving more or less extreme */
+     20% { transform: rotate(-8.0deg) }
+     30% { transform: rotate(14.0deg) }
+     40% { transform: rotate(-4.0deg) }
+     50% { transform: rotate(10.0deg) }
+     60% { transform: rotate( 0.0deg) }  /* Reset for the last half to pause */
+    100% { transform: rotate( 0.0deg) }
+  }
+  
+  
+  
+  
