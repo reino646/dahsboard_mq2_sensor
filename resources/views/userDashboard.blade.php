@@ -35,7 +35,7 @@
 
 <body>
     <style>
-        canvas { max-width: 80%; max-height: 100%;}
+        canvas { max-width: 100%; max-height: 100%;}
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
         input[type="datetime-local"] { margin: 10px 5px; }

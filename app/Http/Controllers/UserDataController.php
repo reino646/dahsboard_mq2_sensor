@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 class UserDataController extends Controller
 {
     function index() {
+        if (empty(session('displayName')))
+        return redirect('/');
         return view('userData');
     }
 }

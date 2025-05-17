@@ -15,9 +15,10 @@ use App\Http\Controllers\SessionController;
 use App\Http\Controllers\UserDataController;
 use App\Http\Controllers\FirebaseUserController;
 use App\Http\Controllers\UserManageController;
+use App\Http\Controllers\LoginController;
 
 Route::get('/', function () {
-    return view('login');
+    return view('landingpage');
 });
 Route::get('/home', [HomeController::class, 'index1']);
 Route::get('/dashboard2', [Dashboard2Controller::class, 'index2']);
@@ -36,3 +37,4 @@ Route::post('/update-role/{uid}', [FirebaseUserController::class, 'update']);
 Route::get('/userData', [UserDataController::class, 'index']);
 Route::get('/userManage', [UserManageController::class, 'index']);
 Route::post('/delete-user/{uid}', [FirebaseUserController::class, 'delete']);
+Route::get('/login', [LoginController::class, 'index']);

@@ -8,7 +8,9 @@ class SessionController extends Controller
 {
     public function store(Request $request)
     {
-        session(['displayName' => $request->displayName]);
+        session(['displayName' => $request->displayName, 
+        'photoURL' => $request->photoURL,
+        ]);
         return response()->json(['status' => 'ok']);
     }
 }

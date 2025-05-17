@@ -13,6 +13,7 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+    <link rel="icon" type="image/png" href="/img/fire.png" />
   </head>
 
   <body class="flex font-poppins items-center justify-center">
@@ -20,9 +21,8 @@
       <div class="grid gap-8">
         <div id="back-div" class="bg-gradient-to-r from-orange-400/60 to-red-500/60 rounded-[26px] m-4">
           <div class="border-[20px] border-transparent rounded-[20px] bg-gradient-to-br from-orange-100 via-red-100 to-yellow-100 shadow-lg xl:p-10 2xl:p-10 lg:p-10 md:p-10 sm:p-2 m-2">
-            <h1 class=" pb-2 font-bold text-orange-950 dark:text-orange-950 text-3xl text-center cursor-default flex flex-col items-center">
-              <img src="/img/fire.png" alt="fire icon" class="w-25 h-30 mb-1" />
-              Fire Detector
+            <h1 class=" font-bold text-orange-950 dark:text-orange-950 text-3xl text-center cursor-default flex flex-col items-center">
+              <img src="/img/fire.png" alt="fire icon" class="w-40 h-40" />
             </h1>
 
             <form id="loginForm" class="space-y-2">
@@ -50,35 +50,30 @@
               />
             </div>
 
-            <!-- Optional: Only needed if user belum pernah login sebelumnya -->
-            <div>
-              <label for="displayName" class="mb-2 text-red-600 dark:text-gray-400 text-lg">Nama Lengkap</label>
-              <input
-                id="displayName"
-                name="displayName"
-                class="border p-3 bg-white dark:bg-gray-100 dark:text-gray-400 dark:border-gray-700 shadow-md placeholder:text-base focus:scale-105 focus:ring-2 focus:ring-red-400 ease-in-out duration-300 border-gray-300 rounded-lg w-full"
-                type="text"
-                placeholder="Nama Lengkap"
-              />
-            </div>
 
-            <a class="group text-red-400 transition-all duration-100 ease-in-out" href="#">
+            <a class="group text-red-400 transition-all duration-100 ease-in-out " href="#">
               <span class="bg-left-bottom bg-gradient-to-r from-red-400 to-red-400 bg-[length:0%_2px] bg-no-repeat group-hover:bg-[length:100%_2px] transition-all duration-500 ease-out">
                 Forget your password?
               </span>
             </a>
 
             <button
-              class="bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 shadow-lg mt-6 p-2 text-white rounded-lg w-full hover:scale-105 hover:from-yellow-500 hover:to-red-500 transition duration-300 ease-in-out"
+              class="mb-2 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 shadow-lg mt-3 p-2 text-white rounded-lg w-full hover:scale-105 hover:from-yellow-500 hover:to-red-500 transition duration-300 ease-in-out"
               type="submit"
             >
               LOG IN
             </button>
           </form>
+            <a class="group text-gray-500 transition-all duration-100 ease-in-out" href="/users">
+              Don't have an account? 
+              <span class="pb-2 text-red-400 bg-left-bottom bg-gradient-to-r from-red-400 to-red-400 bg-[length:0%_2px] bg-no-repeat group-hover:bg-[length:100%_2px] transition-all duration-500 ease-out">
+                sign up here
+              </span>
+            </a>
 
 
             <!-- Third Party Authentication Options -->
-            <div id="third-party-auth" class="flex items-center justify-center mt-5 flex-wrap">
+            <div id="third-party-auth" class="flex items-center justify-center mt-2 flex-wrap">
               <button id="signinGoogle" class="hover:scale-105 ease-in-out duration-300 shadow-lg p-2 rounded-lg m-1">
                 <img class="max-w-[25px]" src="https://ucarecdn.com/8f25a2ba-bdcf-4ff1-b596-088f330416ef/" alt="Google" />
               </button>
@@ -131,102 +126,99 @@ const db = getDatabase(app);
 window.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector('form');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const nameInput = document.getElementById('displayName').value;
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const uid = user.uid;
+
+    const userRef = ref(db, 'users/' + uid);
+    const snapshot = await get(userRef);
+
+    if (!snapshot.exists()) {
+      alert("Data pengguna tidak ditemukan. Silakan daftar terlebih dahulu.");
+      return;
+    }
+
+    const userData = snapshot.val();
+    const displayName = userData.name || email.split("@")[0];
+
+    await fetch('/store-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ displayName: displayName })
+    });
+
+    const role = userData.role || 'user';
+    alert("Login sebagai " + role);
+    window.location.href = role === 'admin' ? '/dashboard2' : '/userDashboard';
+
+  } catch (error) {
+    alert("Login gagal: " + error.message);
+    console.error(error);
+  }
+});
+
+});
+document.getElementById("signinGoogle").addEventListener("click", async function (e) {
+  e.preventDefault();
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
       const uid = user.uid;
+      const email = user.email;
+      const displayName = user.displayName;
+      const photoURL = user.photoURL;
 
       const userRef = ref(db, 'users/' + uid);
       const snapshot = await get(userRef);
 
-      let displayName = "";
-
       if (!snapshot.exists()) {
-        displayName = nameInput.trim() || email.split("@")[0]; // fallback kalau nama kosong
         await set(userRef, {
           uid: uid,
           email: email,
           name: displayName,
+          photoURL: photoURL,
           role: "user"
         });
-      } else {
-        const userData = snapshot.val();
-        displayName = userData.name || email.split("@")[0];
       }
 
-      // Kirim displayName ke Laravel backend
+      const userData = (await get(userRef)).val();
+      const role = userData.role || 'user';
+
+      // ⬇️ Simpan data ke localStorage
+      localStorage.setItem("profileImage", photoURL);
+      localStorage.setItem("displayName", displayName);
+
+      // ⬇️ Kirim juga ke Laravel (opsional jika backend butuh)
       await fetch('/store-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         },
-        body: JSON.stringify({ displayName: displayName })
+        body: JSON.stringify({ 
+          displayName: displayName,
+          photoURL: photoURL
+        })
       });
-
-      const userData = (await get(userRef)).val();
-      const role = userData.role || 'user';
 
       alert("Login sebagai " + role);
       window.location.href = role === 'admin' ? '/dashboard2' : '/userDashboard';
-
     } catch (error) {
       alert("Login gagal: " + error.message);
       console.error(error);
     }
   });
-});
-document.getElementById("signinGoogle").addEventListener("click", async function (e) {
-        e.preventDefault();
 
-        try {
-          const result = await signInWithPopup(auth, provider);
-          const user = result.user;
-          const uid = user.uid;
-          const email = user.email;
-          const displayName = user.displayName;
-          const photoURL = user.photoURL;
-
-          const userRef = ref(db, 'users/' + uid);
-          const snapshot = await get(userRef);
-
-          if (!snapshot.exists()) {
-            await set(userRef, {
-              uid: uid,
-              email: email,
-              name: displayName,
-              photoURL: photoURL,
-              role: "user"
-            });
-          }
-
-          const userData = (await get(userRef)).val();
-          const role = userData.role || 'user';
-
-          // Kirim displayName ke backend Laravel
-          await fetch('/store-session', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ displayName: displayName })
-          });
-
-          alert("Login sebagai " + role);
-          window.location.href = role === 'admin' ? '/dashboard2' : '/userDashboard';
-        } catch (error) {
-          alert("Login gagal: " + error.message);
-          console.error(error);
-        }
-        
-      });
 </script>
 
   </body>

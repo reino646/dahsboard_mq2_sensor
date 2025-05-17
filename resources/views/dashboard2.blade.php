@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
-    
+    <link rel="icon" type="image/png" href="/img/fire.png" />
 
 
 </head>

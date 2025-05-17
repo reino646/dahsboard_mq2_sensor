@@ -36,9 +36,13 @@ function data() {
 window.onload = function() {
     const profileImage = localStorage.getItem("profileImage");
     if (profileImage) {
-      // Jika ada gambar profil, tampilkan di sidebar
-      document.getElementById("userProfileImage").src = profileImage;
-      document.getElementById("userProfileImage").classList.remove("hidden");
+      const img = document.getElementById("userProfileImage");
+      if (img) {
+        img.src = profileImage;
+        img.classList.remove("hidden");
+      }
     }
   };
+
+
   

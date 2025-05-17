@@ -7,6 +7,7 @@ import {
     set,
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
+
 // Firebase config
 const firebaseConfig = {
     databaseURL:
@@ -45,8 +46,21 @@ const gasChart = new Chart(ctx, {
 
 let previousStatusColor = sessionStorage.getItem('previousStatusColor') || null; // Ambil status warna sebelumnya dari sessionStorage
 let isWaiting = false; // Penanda delay aktif
+let previousTimestamp = null; // Untuk menyimpan timestamp sebelumnya
 
 function updateLatest(data, thresholds) {
+    // Ambil tanggal hari ini untuk digabungkan dengan timestamp yang diterima
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0]; // Ambil tanggal dalam format YYYY-MM-DD
+    const fullTimestamp = `${currentDate}T${data.timestamp}`; // Gabungkan tanggal dengan waktu yang diterima
+
+    const dataTime = new Date(fullTimestamp); // Membuat objek Date berdasarkan timestamp yang sudah lengkap
+    const diffInSeconds = (now - dataTime) / 1000;
+
+    console.log(`Timestamp lengkap: ${fullTimestamp}`);
+    console.log(`Waktu saat ini: ${now}`);
+    console.log(`Selisih waktu (detik): ${diffInSeconds}`);
+
     // Tentukan apakah ada treshold yang terlampaui
     const exceed = thresholds.some((t) => data.gas_ppm > t.ppm);
 
@@ -59,6 +73,10 @@ function updateLatest(data, thresholds) {
     const statusText = exceed ? "Tidak Normal" : "Aman"; // Status berubah sesuai treshold
 
     const statusIconColor = exceed ? "text-red-500" : "text-green-500";
+
+    // Menentukan status Esp berdasarkan selisih waktu
+    const statusEsp = diffInSeconds <= 5 ? "Online" : "Offline"; // Jika data tidak berubah dalam 5 detik, offline
+    console.log(`Status Esp: ${statusEsp}`);
 
     // Jika warna status berubah
     if (statusColor !== previousStatusColor) {
@@ -77,17 +95,18 @@ function updateLatest(data, thresholds) {
             `;
 
             setTimeout(() => {
-                renderLatestData(statusText); // Pass statusText ke fungsi render
+                renderLatestData(statusText, statusEsp); // Pass statusText dan statusEsp ke fungsi render
                 isWaiting = false;
                 previousStatusColor = statusColor;
                 sessionStorage.setItem('previousStatusColor', statusColor); // Simpan status warna ke sessionStorage
+                previousTimestamp = data.timestamp; // Simpan timestamp terakhir
             }, 1000);
         }
     } else {
-        renderLatestData(statusText); // Pastikan render dengan status terbaru
+        renderLatestData(statusText, statusEsp); // Pastikan render dengan status terbaru
     }
 
-    function renderLatestData(statusText) {
+    function renderLatestData(statusText, statusEsp) {
         latestDiv.innerHTML = `
         <div class="flex flex-wrap gap-4 justify-center">
           <div class="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded-xl shadow w-48">
@@ -111,12 +130,11 @@ function updateLatest(data, thresholds) {
           <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-xl shadow w-48">
             <h4 class="font-bold flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 4h16v16H4V4zm4 4h8v8H8V8z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4V4zm4 4h8v8H8V8z" />
               </svg>
               Digital
             </h4>
-            <p>${data.digitalGas}</p>
+            <p>${statusEsp}</p>
           </div>
           <div class="bg-gray-100 border-l-4 border-gray-500 text-gray-700 p-4 rounded-xl shadow w-48">
             <h4 class="font-bold flex items-center gap-2">
@@ -147,6 +165,36 @@ onValue(activeThresholdsRef, (snap) => {
     const data = snap.val();
     thresholds = data ? Object.values(data) : [];
 });
+
+import { query, limitToLast, onValue as onVal } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+// Ambil 30 data terakhir dari mq2_logs
+const logsQuery = query(ref(db, "mq2_logs"), limitToLast(30));
+
+onVal(logsQuery, (snapshot) => {
+    const history = [];
+
+    snapshot.forEach((child) => {
+        const val = child.val();
+        history.push({
+            time: val.timestamp,
+            ppm: val.gas_ppm
+        });
+    });
+
+    // Bersihkan dulu data chart
+    gasChart.data.labels = [];
+    gasChart.data.datasets[0].data = [];
+
+    // Tambahkan data ke chart
+    history.forEach((item) => {
+        gasChart.data.labels.push(item.time);
+        gasChart.data.datasets[0].data.push(item.ppm);
+    });
+
+    gasChart.update();
+});
+
 
 // Data real-time dari MQ2
 onValue(mq2Ref, (snapshot) => {
